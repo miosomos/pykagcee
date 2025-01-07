@@ -6,17 +6,23 @@ This library is used to create a knowledge graph from a python project. It is ba
 
 You should have the [uv](https://docs.astral.sh/uv/getting-started/installation/) tool installed on your system. 
 
-Once cloned and inside the repository, you can run the following command to generate the knowledge graph.
+Once cloned and inside the repository, you should set the enviroment variables in a `.env`:
 
 ```bash
-uv run pykagcee
+cp .env.example .env
+``````
+
+You can run the following command to generate the knowledge graph:
+
+```bash
+uv run pykagcee /path/to/python/project
 ```
 
 ## Modifications
 
 This project includes modifications made by Perer876:
 
-- [Modification Date]: [Brief description of changes]
+- 01/07/2025: Extract the `graph_database` package from the `ModelScope-Agent` project and add it to this project.
 
 ## License
 
