@@ -15,7 +15,13 @@ cp .env.example .env
 You can run the following command to generate the knowledge graph:
 
 ```bash
-uv run pykagcee /path/to/python/project
+uv run pykagcee build /path/to/python/project
+```
+
+Or to wipe the graph database:
+    
+```bash
+uv run pykagcee wipe
 ```
 
 ## Modifications

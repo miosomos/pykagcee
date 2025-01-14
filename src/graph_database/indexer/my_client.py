@@ -1,6 +1,7 @@
 import codecs
 
 import sourcetraildb as srctrl
+from graph_database.indexer.index_utils import SourceRange
 from my_graph_db import GraphDatabaseHandler
 
 
@@ -190,7 +191,7 @@ class AstVisitorClient:
 
     def recordSymbolKind(self, symbolId, symbolKind):
         full_name = self.symbolId_to_Name[symbolId]
-        kind = symbolKindToString(symbolKind)
+        kind = symbol_kind_to_string(symbolKind)
         self.symbol_data[full_name]["kind"] = kind
         # create node
         if kind == "MODULE":
@@ -276,13 +277,13 @@ class AstVisitorClient:
                     end_name=full_name,
                 )
 
-    def recordSymbolLocation(self, symbolId, sourceRange):
+    def recordSymbolLocation(self, symbolId, source_range: SourceRange):
         name = self.symbolId_to_Name[symbolId]
         kind = self.symbol_data[name]["kind"]
 
         if kind in ["CLASS", "FUNCTION", "METHOD"]:
             code = self.extract_code_between_lines(
-                sourceRange.startLine, sourceRange.endLine, is_code=False
+                source_range.startLine, source_range.endLine, is_code=False
             )
             self.graphDB.add_node(
                 kind, full_name=name, parms={"signature": code.strip()}
@@ -290,17 +291,17 @@ class AstVisitorClient:
 
         if kind in ["GLOBAL_VARIABLE", "FIELD"]:
             code = self.extract_code_between_lines(
-                sourceRange.startLine - 3, sourceRange.endLine + 3
+                source_range.startLine - 3, source_range.endLine + 3
             )
             self.graphDB.add_node(kind, full_name=name, parms={"code": code.strip()})
 
-    def recordSymbolScopeLocation(self, symbolId, sourceRange):
+    def recordSymbolScopeLocation(self, symbolId, source_range: SourceRange):
         name = self.symbolId_to_Name[symbolId]
         kind = self.symbol_data[name]["kind"]
 
         if kind in ["CLASS", "FUNCTION", "METHOD"]:
             code = self.extract_code_between_lines(
-                sourceRange.startLine, sourceRange.endLine, is_indent=True
+                source_range.startLine, source_range.endLine, is_indent=True
             )
             self.graphDB.add_node(kind, full_name=name, parms={"code": code})
             self.extract_signature(code)
@@ -309,7 +310,7 @@ class AstVisitorClient:
         pass
 
     def recordReference(self, contextSymbolId, referencedSymbolId, referenceKind):
-        referenceKindStr = referenceKindToString(referenceKind)
+        referenceKindStr = reference_kind_to_string(referenceKind)
         referenceName = self.symbolId_to_Name[referencedSymbolId]
         contextName = self.symbolId_to_Name[contextSymbolId]
 
@@ -402,51 +403,51 @@ def symbolDefinitionKindToString(symbolDefinitionKind):
     return ""
 
 
-def symbolKindToString(symbolKind):
-    if symbolKind == srctrl.SYMBOL_TYPE:
+def symbol_kind_to_string(symbol_kind):
+    if symbol_kind == srctrl.SYMBOL_TYPE:
         return "TYPE"
-    if symbolKind == srctrl.SYMBOL_BUILTIN_TYPE:
+    if symbol_kind == srctrl.SYMBOL_BUILTIN_TYPE:
         return "BUILTIN_TYPE"
-    if symbolKind == srctrl.SYMBOL_MODULE:
+    if symbol_kind == srctrl.SYMBOL_MODULE:
         return "MODULE"
-    if symbolKind == srctrl.SYMBOL_NAMESPACE:
+    if symbol_kind == srctrl.SYMBOL_NAMESPACE:
         return "NAMESPACE"
-    if symbolKind == srctrl.SYMBOL_PACKAGE:
+    if symbol_kind == srctrl.SYMBOL_PACKAGE:
         return "PACKAGE"
-    if symbolKind == srctrl.SYMBOL_STRUCT:
+    if symbol_kind == srctrl.SYMBOL_STRUCT:
         return "STRUCT"
-    if symbolKind == srctrl.SYMBOL_CLASS:
+    if symbol_kind == srctrl.SYMBOL_CLASS:
         return "CLASS"
-    if symbolKind == srctrl.SYMBOL_INTERFACE:
+    if symbol_kind == srctrl.SYMBOL_INTERFACE:
         return "INTERFACE"
-    if symbolKind == srctrl.SYMBOL_ANNOTATION:
+    if symbol_kind == srctrl.SYMBOL_ANNOTATION:
         return "ANNOTATION"
-    if symbolKind == srctrl.SYMBOL_GLOBAL_VARIABLE:
+    if symbol_kind == srctrl.SYMBOL_GLOBAL_VARIABLE:
         return "GLOBAL_VARIABLE"
-    if symbolKind == srctrl.SYMBOL_FIELD:
+    if symbol_kind == srctrl.SYMBOL_FIELD:
         return "FIELD"
-    if symbolKind == srctrl.SYMBOL_FUNCTION:
+    if symbol_kind == srctrl.SYMBOL_FUNCTION:
         return "FUNCTION"
-    if symbolKind == srctrl.SYMBOL_METHOD:
+    if symbol_kind == srctrl.SYMBOL_METHOD:
         return "METHOD"
-    if symbolKind == srctrl.SYMBOL_ENUM:
+    if symbol_kind == srctrl.SYMBOL_ENUM:
         return "ENUM"
-    if symbolKind == srctrl.SYMBOL_ENUM_CONSTANT:
+    if symbol_kind == srctrl.SYMBOL_ENUM_CONSTANT:
         return "ENUM_CONSTANT"
-    if symbolKind == srctrl.SYMBOL_TYPEDEF:
+    if symbol_kind == srctrl.SYMBOL_TYPEDEF:
         return "TYPEDEF"
-    if symbolKind == srctrl.SYMBOL_TYPE_PARAMETER:
+    if symbol_kind == srctrl.SYMBOL_TYPE_PARAMETER:
         return "TYPE_PARAMETER"
-    if symbolKind == srctrl.SYMBOL_FILE:
+    if symbol_kind == srctrl.SYMBOL_FILE:
         return "FILE"
-    if symbolKind == srctrl.SYMBOL_MACRO:
+    if symbol_kind == srctrl.SYMBOL_MACRO:
         return "MACRO"
-    if symbolKind == srctrl.SYMBOL_UNION:
+    if symbol_kind == srctrl.SYMBOL_UNION:
         return "UNION"
     return ""
 
 
-def referenceKindToString(referenceKind):
+def reference_kind_to_string(referenceKind):
     if referenceKind == srctrl.REFERENCE_TYPE_USAGE:
         return "TYPE_USAGE"
     if referenceKind == srctrl.REFERENCE_USAGE:

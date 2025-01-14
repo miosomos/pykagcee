@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-import uuid
 
 import my_client as my_client
 import shallow_indexer
@@ -22,7 +21,7 @@ def indexSourceFile(
     rootPath,
     shallow,
 ):
-    astVisitorClient = my_client.AstVisitorClient(graph_db, task_root_path=rootPath)
+    ast_visitor_client = my_client.AstVisitorClient(graph_db, task_root_path=rootPath)
 
     print("use shallow: " + str(shallow))
 
@@ -33,7 +32,7 @@ def indexSourceFile(
             sourceFilePath,
             environmentPath,
             workingDirectory,
-            astVisitorClient,
+            ast_visitor_client,
             False,
             rootPath,
         )
@@ -47,11 +46,11 @@ def run_single(
     srctrl_clear=False,
     shallow=True,
 ):
-    workingDirectory = os.getcwd()
+    working_directory = os.getcwd()
     indexSourceFile(
         sourceFilePath,
         environmentPath,
-        workingDirectory,
+        working_directory,
         graph_db,
         root_path,
         shallow,

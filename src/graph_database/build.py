@@ -2,13 +2,14 @@ import os
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional
 
 from graph_database import GraphDatabaseHandler
 from graph_database.ast_search import AstManager
 
 
-def get_py_files(directory):
-    py_files = []
+def get_py_files(directory: str):
+    py_files: list[str] = []
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(".py"):
@@ -87,7 +88,7 @@ def build_graph_database(
     repo_path: str,
     task_id: str,
     is_clear: bool = True,
-    max_workers=None,
+    max_workers: Optional[int]=None,
     env_path_dict=None,
     update_progress_bar=None,
 ):
@@ -123,7 +124,7 @@ def build_graph_database(
                 executor.shutdown(wait=False, cancel_futures=True)
                 return msg
             finally:
-                # 每完成一个任务，更新进度条
+                # Cada vez que se completa una tarea, actualiza la barra de progreso
                 if update_progress_bar:
                     update_progress_bar((i + 1) / total_files)
                 # print((i+1) / total_files)

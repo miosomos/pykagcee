@@ -6,7 +6,7 @@ import os
 from graph_database import indexer
 from .config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD
 
-app = typer.Typer(invoke_without_command=True)
+app = typer.Typer()
 
 # Define the environment path dictionary
 env_path_dict = {
@@ -28,14 +28,20 @@ graph_db = GraphDatabaseHandler(
 )
 
 
-@app.callback()
-def main(project_path: str) -> None:
+@app.command()
+def build(project_path: str) -> None:
     # Build the graph database
     build_graph_database(
         graph_db=graph_db,
         repo_path=project_path,
         task_id="pykagcee",
         is_clear=True,
-        max_workers=None,
+        max_workers=8,
         env_path_dict=env_path_dict,
     )
+
+@app.command()
+def wipe() -> None:
+    print("Wiping the database...")
+    graph_db.clear_database()
+    print("Database wiped.")

@@ -197,15 +197,15 @@ def getNamedParentNode(node):
     if node is None:
         return None
 
-    parentNode = node.parent
+    parent_node = node.parent
 
-    if node.type == "name" and parentNode is not None:
-        parentNode = parentNode.parent
+    if node.type == "name" and parent_node is not None:
+        parent_node = parent_node.parent
 
-    while parentNode is not None:
-        if getFirstDirectChildWithType(parentNode, "name") is not None:
-            return parentNode
-        parentNode = parentNode.parent
+    while parent_node is not None:
+        if getFirstDirectChildWithType(parent_node, "name") is not None:
+            return parent_node
+        parent_node = parent_node.parent
 
     return None
 
