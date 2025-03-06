@@ -23,7 +23,7 @@ class Checkpoint:
 
         result = self._graph.run(query, ids=list(task_ids))
 
-        return { record["t.taskId"] for record in result }
+        return {record["t.taskId"] for record in result}
 
     def get_all_completed_tasks(self) -> set[str]:
         query = f"""
@@ -32,7 +32,7 @@ class Checkpoint:
 
         result = self._graph.run(query)
 
-        return { record["t.taskId"] for record in result }
+        return {record["t.taskId"] for record in result}
 
     def __contains__(self, task_id: str) -> bool:
         query = f"""
@@ -42,5 +42,3 @@ class Checkpoint:
         result = self._graph.run(query, id=task_id)
 
         return result.evaluate() is not None
-
-

@@ -10,13 +10,15 @@ class TaskMetadata(TypedDict):
     groundtruth_start_lineno: int
     right_context_start_lineno: int
 
+
 class Task(TypedDict):
     prompt: str
     groundtruth: str
     right_context: str
     metadata: TaskMetadata
 
+
 def iter_tasks(file_path: str) -> Generator[Task, None, None]:
-    with open(file_path, "r", encoding='utf-8') as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         for line in file:
             yield json.loads(line)

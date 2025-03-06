@@ -1,8 +1,9 @@
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from graph_database import GraphDatabaseHandler
 from graph_database.build import build_graph_database
 import typer
+from rich import console
 import sys
 import os
 from graph_database import indexer
@@ -11,6 +12,8 @@ from .config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD
 from pykagcee.checkpoint import Checkpoint
 
 app = typer.Typer()
+
+console = console.Console()
 
 # Define the environment path dictionary
 env_path_dict = {
@@ -33,6 +36,7 @@ graph_db = GraphDatabaseHandler(
 
 checkpoint = Checkpoint(graph_db.graph)
 
+
 @app.command()
 def mark_as_completed(task_id: str) -> None:
     """
@@ -40,56 +44,78 @@ def mark_as_completed(task_id: str) -> None:
     """
     checkpoint.mark_as_completed(task_id)
 
+
 @app.command()
-def build(project_path: str, task_id: str) -> None:
+def build(project_path: str, repository_id: str) -> None:
     """
     Build the graph database for the given project path.
     """
-    if task_id in checkpoint:
-        print(f"Task {task_id} already completed.")
+    if repository_id in checkpoint:
+        console.print(f"Task '{repository_id}' already completed.")
         return
 
     build_graph_database(
         graph_db=graph_db,
         repo_path=project_path,
-        task_id=task_id,
-        is_clear=True,
-        max_workers=8,
+        task_id=repository_id,
+        is_clear=False,
+        max_workers=16,
         env_path_dict=env_path_dict,
     )
 
-    checkpoint.mark_as_completed(task_id)
+    checkpoint.mark_as_completed(repository_id)
+
 
 @app.command()
-def build_fake(project_path: str, task_id: str) -> None:
+def build_fake(project_path: str, repository_id: str) -> None:
     """
-    Build the graph database for the given project path.
+    Fake build just to try parallel procesing.
     """
-    if task_id in checkpoint:
-        print(f"Task {task_id} already completed.")
+    if repository_id in checkpoint:
+        console.print(f"Task '{repository_id}' already completed.")
         return
 
     time.sleep(1)
 
-    checkpoint.mark_as_completed(task_id)
+    checkpoint.mark_as_completed(repository_id)
+
 
 @app.command()
 def init_cceval(tasks_file_path: str, raw_data_directory: str) -> None:
     """
     Initialize the CCEval data needed to build the graph.
     """
-    repositories = { task["metadata"]["repository"] for task in cceval.iter_tasks(tasks_file_path) }
+    repositories = {
+        task["metadata"]["repository"] for task in cceval.iter_tasks(tasks_file_path)
+    }
 
-    projects = [ os.path.join(raw_data_directory, repository) for repository in repositories ]
+    projects = [
+        os.path.join(raw_data_directory, repository) for repository in repositories
+    ]
 
-    with ThreadPoolExecutor(max_workers=16) as executor:
-        executor.map(build_fake, projects, repositories)
+    total_tasks = len(projects)
 
-    print("Done.")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        # Submit all tasks and collect Future objects
+        futures = [
+            executor.submit(build, project, repository)
+            for project, repository in zip(projects, repositories)
+        ]
+
+        # Initialize a counter for completed tasks
+        completed_tasks = 0
+
+        # Track completion of tasks as they finish
+        for _ in as_completed(futures):
+            completed_tasks += 1
+            console.print(f"Tasks completed: {completed_tasks}/{total_tasks}")
+
+    console.print("Done.")
+
 
 @app.command()
 def wipe() -> None:
-    print("Wiping the database...")
+    console.print("Wiping the database...")
     graph_db.clear_database()
     # Delete indexes
     result = graph_db.execute_query("SHOW INDEXES")
@@ -97,8 +123,4 @@ def wipe() -> None:
         index_name = record["name"]
         graph_db.execute_query(f"DROP INDEX {index_name}")
 
-    print("Database wiped.")
-
-@app.command()
-def play() -> None:
-    print(os.path.join("src", "pykagcee", "main.py"))
+    console.print("Database wiped.")

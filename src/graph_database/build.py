@@ -88,7 +88,7 @@ def build_graph_database(
     repo_path: str,
     task_id: str,
     is_clear: bool = True,
-    max_workers: Optional[int]=None,
+    max_workers: Optional[int] = None,
     env_path_dict=None,
     update_progress_bar=None,
 ):

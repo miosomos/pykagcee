@@ -97,9 +97,7 @@ class GraphDatabaseHandler:
         existing_node = self._match_node(full_name)
         if existing_node:
             query = (
-                "MATCH (n:{0}:`{1}` {{full_name: $full_name}}) "
-                "REMOVE n:{0} "
-                "SET n:{2}"
+                "MATCH (n:{0}:`{1}` {{full_name: $full_name}}) REMOVE n:{0} SET n:{2}"
             ).format(self.none_label, self.task_id, label)
             self.graph.run(query, full_name=full_name)
             return True
@@ -108,7 +106,7 @@ class GraphDatabaseHandler:
     def _add_node_label(self, full_name, new_label):
         existing_node = self._match_node(full_name)
         if existing_node:
-            query = ("MATCH (n:`{0}` {{full_name: $full_name}}) " "SET n:{1}").format(
+            query = ("MATCH (n:`{0}` {{full_name: $full_name}}) SET n:{1}").format(
                 self.task_id, new_label
             )
             self.graph.run(query, full_name=full_name)
