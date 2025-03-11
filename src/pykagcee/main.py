@@ -59,7 +59,7 @@ def build(project_path: str, repository_id: str) -> None:
         repo_path=project_path,
         task_id=repository_id,
         is_clear=False,
-        max_workers=16,
+        max_workers=4,
         env_path_dict=env_path_dict,
     )
 
@@ -95,7 +95,7 @@ def init_cceval(tasks_file_path: str, raw_data_directory: str) -> None:
 
     total_tasks = len(projects)
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         # Submit all tasks and collect Future objects
         futures = [
             executor.submit(build, project, repository)
