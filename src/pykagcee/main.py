@@ -1,4 +1,3 @@
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from graph_database import GraphDatabaseHandler
 from graph_database.build import build_graph_database
@@ -25,24 +24,24 @@ env_path_dict = {
     "db_name": "",
 }
 
-# Initialize the Graph Database Handler
-graph_db = GraphDatabaseHandler(
-    uri=env_path_dict["url"],
-    user=env_path_dict["user"],
-    password=env_path_dict["password"],
-    database_name=env_path_dict["db_name"],
-    use_lock=True,
-)
-
-checkpoint = Checkpoint(graph_db.graph)
-
-
 @app.command()
-def mark_as_completed(task_id: str) -> None:
+def mark_as_completed(repository_id: str) -> None:
     """
     Mark a task as completed.
     """
-    checkpoint.mark_as_completed(task_id)
+    # Initialize the Graph Database Handler
+    graph_db = GraphDatabaseHandler(
+        uri=env_path_dict["url"],
+        user=env_path_dict["user"],
+        password=env_path_dict["password"],
+        database_name=env_path_dict["db_name"],
+        use_lock=True,
+        lockfile=repository_id + "_neo4j.lock",
+    )
+
+    checkpoint = Checkpoint(graph_db.graph)
+
+    checkpoint.mark_as_completed(repository_id)
 
 
 @app.command()
@@ -50,6 +49,19 @@ def build(project_path: str, repository_id: str) -> None:
     """
     Build the graph database for the given project path.
     """
+
+    # Initialize the Graph Database Handler
+    graph_db = GraphDatabaseHandler(
+        uri=env_path_dict["url"],
+        user=env_path_dict["user"],
+        password=env_path_dict["password"],
+        database_name=env_path_dict["db_name"],
+        use_lock=True,
+        lockfile=repository_id + "_neo4j.lock",
+    )
+
+    checkpoint = Checkpoint(graph_db.graph)
+
     if repository_id in checkpoint:
         console.print(f"Task '{repository_id}' already completed.")
         return
@@ -62,20 +74,6 @@ def build(project_path: str, repository_id: str) -> None:
         max_workers=4,
         env_path_dict=env_path_dict,
     )
-
-    checkpoint.mark_as_completed(repository_id)
-
-
-@app.command()
-def build_fake(project_path: str, repository_id: str) -> None:
-    """
-    Fake build just to try parallel procesing.
-    """
-    if repository_id in checkpoint:
-        console.print(f"Task '{repository_id}' already completed.")
-        return
-
-    time.sleep(1)
 
     checkpoint.mark_as_completed(repository_id)
 
@@ -95,7 +93,7 @@ def init_cceval(tasks_file_path: str, raw_data_directory: str) -> None:
 
     total_tasks = len(projects)
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=6) as executor:
         # Submit all tasks and collect Future objects
         futures = [
             executor.submit(build, project, repository)
@@ -115,6 +113,14 @@ def init_cceval(tasks_file_path: str, raw_data_directory: str) -> None:
 
 @app.command()
 def wipe() -> None:
+    # Initialize the Graph Database Handler
+    graph_db = GraphDatabaseHandler(
+        uri=env_path_dict["url"],
+        user=env_path_dict["user"],
+        password=env_path_dict["password"],
+        database_name=env_path_dict["db_name"],
+    )
+
     console.print("Wiping the database...")
     graph_db.clear_database()
     # Delete indexes

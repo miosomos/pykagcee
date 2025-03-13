@@ -16,3 +16,6 @@ wheels/
 
 # Environment
 .env
+
+# Lock files
+*_neo4j.lock
