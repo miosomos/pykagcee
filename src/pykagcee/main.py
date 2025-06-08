@@ -1,4 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional
+
 from graph_database import GraphDatabaseHandler
 from graph_database.build import build_graph_database
 import typer
@@ -24,6 +26,7 @@ env_path_dict = {
     "db_name": "",
 }
 
+
 @app.command()
 def mark_as_completed(repository_id: str) -> None:
     """
@@ -45,10 +48,12 @@ def mark_as_completed(repository_id: str) -> None:
 
 
 @app.command()
-def build(project_path: str, repository_id: str) -> None:
+def build(project_path: str, repository_id: Optional[str] = None) -> None:
     """
     Build the graph database for the given project path.
     """
+    if not repository_id:
+        repository_id = os.path.basename(project_path)
 
     # Initialize the Graph Database Handler
     graph_db = GraphDatabaseHandler(
@@ -79,6 +84,33 @@ def build(project_path: str, repository_id: str) -> None:
 
 
 @app.command()
+def build_all(projects_path: str, max_workers: Optional[int] = 4) -> None:
+    """
+    Build the graph database for all projects in the given path.
+    """
+    repositories = [
+        os.path.join(projects_path, repository_basename)
+        for repository_basename in os.listdir(projects_path)
+    ]
+
+    total_tasks = len(repositories)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all tasks and collect Future objects
+        futures = [executor.submit(build, repository) for repository in repositories]
+
+        # Initialize a counter for completed tasks
+        completed_tasks = 0
+
+        # Track completion of tasks as they finish
+        for _ in as_completed(futures):
+            completed_tasks += 1
+            console.print(f"Tasks completed: {completed_tasks}/{total_tasks}")
+
+    console.print("Done.")
+
+
+@app.command()
 def init_cceval(tasks_file_path: str, raw_data_directory: str) -> None:
     """
     Initialize the CCEval data needed to build the graph.
@@ -96,7 +128,7 @@ def init_cceval(tasks_file_path: str, raw_data_directory: str) -> None:
     with ThreadPoolExecutor(max_workers=6) as executor:
         # Submit all tasks and collect Future objects
         futures = [
-            executor.submit(build, project, repository)
+            executor.submit(build, project)
             for project, repository in zip(projects, repositories)
         ]
 
