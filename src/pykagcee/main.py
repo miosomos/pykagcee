@@ -57,7 +57,7 @@ def build(project_path: str, repository_id: str) -> None:
         password=env_path_dict["password"],
         database_name=env_path_dict["db_name"],
         use_lock=True,
-        lockfile=repository_id + "_neo4j.lock",
+        lockfile=f"locks/{repository_id}_neo4j.lock",
     )
 
     checkpoint = Checkpoint(graph_db.graph)
