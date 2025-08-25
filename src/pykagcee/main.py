@@ -75,7 +75,7 @@ def build(
     build_graph_database(
         graph_db=graph_handler,
         repo_path=str(project_path),
-        task_id=repository_id,
+        task_id=database_name,
         is_clear=False,
         max_workers=4,
         env_path_dict=env_path,
@@ -83,7 +83,9 @@ def build(
 
 
 @app.command()
-def build_all(projects_path: Path, max_workers: Optional[int] = 6) -> None:
+def build_all(
+    projects_path: Path, force: bool = False, max_workers: Optional[int] = 6
+) -> None:
     """
     Build the graph database for all projects in the given path.
     """
@@ -95,7 +97,10 @@ def build_all(projects_path: Path, max_workers: Optional[int] = 6) -> None:
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all tasks and collect Future objects
-        futures = [executor.submit(build, repository) for repository in repositories]
+        futures = [
+            executor.submit(build, repository, force=force)
+            for repository in repositories
+        ]
 
         # Initialize a counter for completed tasks
         completed_tasks = 0
