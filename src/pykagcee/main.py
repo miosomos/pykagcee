@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Optional
-
+from py2neo import SystemGraph, Graph
 from graph_database import GraphDatabaseHandler
 from graph_database.build import build_graph_database
 import typer
@@ -8,9 +9,8 @@ from rich import console
 import sys
 import os
 from graph_database import indexer
-from pykagcee import cceval
+from pykagcee.system import RepositoryGraphDatabase, SystemGraphDatabase
 from .config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD
-from pykagcee.checkpoint import Checkpoint
 
 app = typer.Typer()
 
@@ -26,71 +26,69 @@ env_path_dict = {
     "db_name": "",
 }
 
+system_graph = SystemGraph(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
-@app.command()
-def mark_as_completed(repository_id: str) -> None:
-    """
-    Mark a task as completed.
-    """
-    # Initialize the Graph Database Handler
-    graph_db = GraphDatabaseHandler(
-        uri=env_path_dict["url"],
-        user=env_path_dict["user"],
-        password=env_path_dict["password"],
-        database_name=env_path_dict["db_name"],
-        use_lock=True,
-        lockfile=repository_id + "_neo4j.lock",
-    )
+system_graph_database = SystemGraphDatabase(system_graph)
 
-    checkpoint = Checkpoint(graph_db.graph)
+system_graph_database.create_database("metadata", if_not_exists=True)
+metadata_graph = Graph(
+    NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD), name="metadata"
+)
 
-    checkpoint.mark_as_completed(repository_id)
+repository_graph = RepositoryGraphDatabase(
+    system=system_graph_database, metadata_graph=metadata_graph
+)
 
 
 @app.command()
-def build(project_path: str, repository_id: Optional[str] = None) -> None:
+def build(
+    project_path: Path, repository_id: Optional[str] = None, force: bool = False
+) -> None:
     """
     Build the graph database for the given project path.
     """
     if not repository_id:
-        repository_id = os.path.basename(project_path)
+        repository_id = project_path.name
 
-    # Initialize the Graph Database Handler
-    graph_db = GraphDatabaseHandler(
-        uri=env_path_dict["url"],
-        user=env_path_dict["user"],
-        password=env_path_dict["password"],
-        database_name=env_path_dict["db_name"],
+    if repository_graph.exists(repository_id):
+        if not force:
+            console.print(
+                f"Database for repository '{repository_id}' already exists. Use --force to rebuild."
+            )
+            return
+
+        repository_graph.delete_or_raise(repository_id)
+
+    database_name = repository_graph.create(repository_id, project_path)
+
+    env_path = {**env_path_dict, "db_name": database_name}
+
+    graph_handler = GraphDatabaseHandler(
+        uri=env_path["url"],
+        user=env_path["user"],
+        password=env_path["password"],
+        database_name=env_path["db_name"],
         use_lock=True,
-        lockfile=f"locks/{repository_id}_neo4j.lock",
+        lockfile=f"locks/{repository_id}.lock",
     )
 
-    checkpoint = Checkpoint(graph_db.graph)
-
-    if repository_id in checkpoint:
-        console.print(f"Task '{repository_id}' already completed.")
-        return
-
     build_graph_database(
-        graph_db=graph_db,
-        repo_path=project_path,
+        graph_db=graph_handler,
+        repo_path=str(project_path),
         task_id=repository_id,
         is_clear=False,
         max_workers=4,
-        env_path_dict=env_path_dict,
+        env_path_dict=env_path,
     )
-
-    checkpoint.mark_as_completed(repository_id)
 
 
 @app.command()
-def build_all(projects_path: str, max_workers: Optional[int] = 4) -> None:
+def build_all(projects_path: Path, max_workers: Optional[int] = 6) -> None:
     """
     Build the graph database for all projects in the given path.
     """
     repositories = [
-        os.path.join(projects_path, repository_basename)
-        for repository_basename in os.listdir(projects_path)
+        repository for repository in projects_path.iterdir() if repository.is_dir()
     ]
 
     total_tasks = len(repositories)
@@ -111,54 +109,7 @@ def build_all(projects_path: str, max_workers: Optional[int] = 4) -> None:
 
 
 @app.command()
-def init_cceval(tasks_file_path: str, raw_data_directory: str) -> None:
-    """
-    Initialize the CCEval data needed to build the graph.
-    """
-    repositories = {
-        task["metadata"]["repository"] for task in cceval.iter_tasks(tasks_file_path)
-    }
-
-    projects = [
-        os.path.join(raw_data_directory, repository) for repository in repositories
-    ]
-
-    total_tasks = len(projects)
-
-    with ThreadPoolExecutor(max_workers=6) as executor:
-        # Submit all tasks and collect Future objects
-        futures = [
-            executor.submit(build, project)
-            for project, repository in zip(projects, repositories)
-        ]
-
-        # Initialize a counter for completed tasks
-        completed_tasks = 0
-
-        # Track completion of tasks as they finish
-        for _ in as_completed(futures):
-            completed_tasks += 1
-            console.print(f"Tasks completed: {completed_tasks}/{total_tasks}")
-
-    console.print("Done.")
-
-
-@app.command()
 def wipe() -> None:
-    # Initialize the Graph Database Handler
-    graph_db = GraphDatabaseHandler(
-        uri=env_path_dict["url"],
-        user=env_path_dict["user"],
-        password=env_path_dict["password"],
-        database_name=env_path_dict["db_name"],
-    )
+    repository_graph.delete_all_repositories()
 
-    console.print("Wiping the database...")
-    graph_db.clear_database()
-    # Delete indexes
-    result = graph_db.execute_query("SHOW INDEXES")
-    for record in result:
-        index_name = record["name"]
-        graph_db.execute_query(f"DROP INDEX {index_name}")
-
-    console.print("Database wiped.")
+    console.print("All databases were wiped.")
