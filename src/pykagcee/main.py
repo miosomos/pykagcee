@@ -47,6 +47,8 @@ def build(
     """
     Build the graph database for the given project path.
     """
+    project_path = project_path.resolve()
+
     if not repository_id:
         repository_id = project_path.name
 
@@ -90,7 +92,9 @@ def build_all(
     Build the graph database for all projects in the given path.
     """
     repositories = [
-        repository for repository in projects_path.iterdir() if repository.is_dir()
+        repository.resolve()
+        for repository in projects_path.iterdir()
+        if repository.is_dir()
     ]
 
     total_tasks = len(repositories)
