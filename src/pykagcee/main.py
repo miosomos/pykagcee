@@ -10,7 +10,7 @@ import sys
 import os
 from graph_database import indexer
 from pykagcee.system import RepositoryGraphDatabase, SystemGraphDatabase
-from .config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD
+from pykagcee import env
 
 app = typer.Typer()
 
@@ -20,19 +20,19 @@ console = console.Console()
 env_path_dict = {
     "env_path": sys.executable,
     "working_directory": os.path.dirname(indexer.__file__),
-    "url": NEO4J_URI,
-    "user": NEO4J_USERNAME,
-    "password": NEO4J_PASSWORD,
+    "url": env.NEO4J_URI,
+    "user": env.NEO4J_USERNAME,
+    "password": env.NEO4J_PASSWORD,
     "db_name": "",
 }
 
-system_graph = SystemGraph(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+system_graph = SystemGraph(env.NEO4J_URI, auth=(env.NEO4J_USERNAME, env.NEO4J_PASSWORD))
 
 system_graph_database = SystemGraphDatabase(system_graph)
 
 system_graph_database.create_database("metadata", if_not_exists=True)
 metadata_graph = Graph(
-    NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD), name="metadata"
+    env.NEO4J_URI, auth=(env.NEO4J_USERNAME, env.NEO4J_PASSWORD), name="metadata"
 )
 
 repository_graph = RepositoryGraphDatabase(
