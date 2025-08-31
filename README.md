@@ -2,13 +2,18 @@
 
 This library is used to create a knowledge graph from a python project. 
 It is based on the `modelscope_agent/environment/graph_database` package from the ModelScope-Agent project,
-but ported to be used as a standalone packagend CLI interface.
+but ported to be used as a standalone packaged CLI interface.
+
+## Requirements
+
+- Neo4j DBMS (local or remote). We recommend using the [Neo4j Desktop](https://neo4j.com/download/) application due to its better performance.
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) tool to manage python virtual environment and dependencies.
 
 ## Installation
 
-You should have the [uv](https://docs.astral.sh/uv/getting-started/installation/) tool installed on your system. 
+> You should have the [uv](https://docs.astral.sh/uv/getting-started/installation/) tool installed on your system. 
 
-Once cloned and inside the repository, you should set the enviroment variables in a `.env`:
+Once cloned and inside the repository, you should set the environment variables in a `.env`:
 
 ```bash
 cp .env.example .env
@@ -29,7 +34,7 @@ uv run pykagcee build /path/to/python/project
 
 ### Build multiple knowledge graphs
 
-Create knowledge graphs for multiple Python projects.
+Create knowledge graphs for multiple Python projects under a directory.
 
 ```bash
 uv run pykagcee build-all /path/to/python/projects
@@ -37,6 +42,8 @@ uv run pykagcee build-all /path/to/python/projects
 
 ### Wipe all graphs
     
+Clean all databases.
+
 ```bash
 uv run pykagcee wipe
 ```
@@ -46,6 +53,7 @@ uv run pykagcee wipe
 This project includes modifications made by Perer876:
 
 - 01/07/2025: Extract the `graph_database` package from the `ModelScope-Agent` project and add it to this project.
+- 30/08/2025: Several changes to support the CLI interface and multiple graph creation.
 
 ## License
 
