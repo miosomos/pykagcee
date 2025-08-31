@@ -15,10 +15,21 @@ Clone the repository and set the environment variables in a `.env`:
 
 ```bash
 cp .env.example .env
-``````
+```
 
-And that's all, [uv](https://docs.astral.sh/uv/getting-started/installation/) will create a virtual environment and install the dependencies for you the
-first time you run the project.
+Set your Neo4j connection details in the `.env` file:
+
+```bash
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+```
+
+Create environment and install dependencies:
+
+```bash
+uv sync
+```
 
 ## Usage
 
@@ -27,7 +38,7 @@ first time you run the project.
 Create a knowledge graph for a single Python project.
 
 ```bash
-uv run pykagcee build /path/to/python/project
+uv run pykagcee build /path/to/single/project
 ```
 
 ### Build multiple knowledge graphs
@@ -35,7 +46,7 @@ uv run pykagcee build /path/to/python/project
 Create knowledge graphs for multiple Python projects under a directory.
 
 ```bash
-uv run pykagcee build-all /path/to/python/projects
+uv run pykagcee build-all /path/to/multiple/projects
 ```
 
 ### Wipe all graphs
