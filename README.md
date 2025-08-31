@@ -11,9 +11,7 @@ but ported to be used as a standalone packaged CLI interface.
 
 ## Installation
 
-> You should have the [uv](https://docs.astral.sh/uv/getting-started/installation/) tool installed on your system. 
-
-Once cloned and inside the repository, you should set the environment variables in a `.env`:
+Clone the repository and set the environment variables in a `.env`:
 
 ```bash
 cp .env.example .env
