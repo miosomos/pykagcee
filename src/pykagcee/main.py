@@ -11,6 +11,7 @@ import os
 from graph_database import indexer
 from pykagcee.system import RepositoryGraphDatabase, SystemGraphDatabase
 from pykagcee import env
+import traceback
 
 app = typer.Typer()
 
@@ -100,17 +101,25 @@ def build_all(
     total_tasks = len(repositories)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all tasks and collect Future objects
-        futures = [
-            executor.submit(build, repository, force=force)
+        future_to_repository = {
+            executor.submit(build, repository, force=force): repository
             for repository in repositories
-        ]
+        }
 
-        # Initialize a counter for completed tasks
         completed_tasks = 0
+        for future in as_completed(future_to_repository):
+            repository = future_to_repository[future]
 
-        # Track completion of tasks as they finish
-        for _ in as_completed(futures):
+            try:
+                # Call future.result() to get the result or raise any exception
+                # that occurred during the execution of the 'build' function.
+                future.result()
+            except Exception:
+                stack_trace = traceback.format_exc()
+                console.print(
+                    f"[bold red]Error building {repository.name}:[/bold red]\n{stack_trace}"
+                )
+
             completed_tasks += 1
             console.print(f"Tasks completed: {completed_tasks}/{total_tasks}")
 
