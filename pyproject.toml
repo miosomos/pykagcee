@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Oscar Arambula", email = "peteroso876@gmail.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dependencies = [
     "fasteners>=0.19",
     "jedi>=0.19.2",
