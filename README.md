@@ -46,7 +46,7 @@ uv run pykagcee build /path/to/single/project
 Create knowledge graphs for multiple Python projects under a directory.
 
 ```bash
-uv run pykagcee build-all /path/to/multiple/projects
+uv run pykagcee build-all /path/to/multiple/projects --max-workers 8
 ```
 
 ### Wipe all graphs
