@@ -91,7 +91,7 @@ class RepositoryGraphDatabase:
     ) -> str:
         database_name = database_name or sanitize_folder_name(repository_id)
 
-        self.system.create_database(database_name, if_not_exists=False)
+        self.system.create_database(database_name, if_not_exists=True)
 
         self.metadata_graph.run(
             f"CREATE (r:{self.node_label} {{repository_id: $repository_id, project_path: $project_path, database_name: $database_name}})",
